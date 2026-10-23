@@ -1,0 +1,283 @@
+/* 2026-09-11 (v2.4): 配色与倒角对齐"印前检查-雪糕"面板(用户指定方案 A: 只换配色令牌 + 统一倒角, 结构不动)。
+   2026-10-07 (v2.8): 印前此后又换过两代 ⇒ 再对齐一次(用户选 ①+②; 按钮保持深灰)。
+     · 印前 v9.3 换三层底色: 页 #1e1e1e → #151517、面 #252526 → #1b1b1c(描边仍 #3a3a3a)。
+     · 印前 v9.0 起三族按钮全面胶囊 ⇒ .panel-action 4px → 999px(底色/描边仍深灰, 不用印前的蓝 #0e639c)。
+     · 语义色对齐印前: 黄 #ffcc00 → #e8b93e; 红 #ff8080 → #f48771。
+     · 未动(已于 v2.4 对齐): 滚动条 10px/#4a4a4a/5px、复选框 14×14 accent #d33、正文 #e6e6e6 12px、输入框倒角 4px。
+   2026-10-12 (v2.9): 两个面板合并为一个(顶部页签切换) ⇒ 新增 .tabbar/.tab/.pane-off 与
+     .num-row("每行数量"输入行); 原先各页自己的 h1 标题被页签行取代 ⇒ 版本号改挂 .tabbar .ver。
+     颜色一律沿用灰色系(用户此前拍板"按钮保持灰色"), 选中态靠字色提亮 + 2px 下划线, 不用彩色。
+     此前的取值(v2.4/v2.8)一字未改。
+   2026-10-20 (v3.0): 视觉再同步一次印前(当时 v11.3)。用户选方案 A —— 只改底色/输入框/
+     复选框/滚动条 4 处, 主按钮 .panel-action 保持灰色不动。
+     · 页底 #151517 → #000(印前 v10.50 起顶栏与页底同为纯黑)。
+     · 输入框 #1b1b1c → #1f1f21、描边 #3a3a3a → #4a4a4a、倒角 4px → 6px、focus #4a4a4a → #888。
+     · 复选框 accent #d33 → #1a73e8(尺寸 14×14 仍不动, 印前是 15×15, 此处保留本面板原尺寸)。
+     · 滚动条轨道/corner 透明 → #000; 滑块 #4a4a4a → #1b1b1b + border 2px #000(不再用 background-clip); hover #5a5a5a → #3a3a3a。
+     分隔线 #3a3a3a 与控件描边 #4a4a4a 仍分两档, 与印前一致。
+   注: 本文件为两个面板共用, 底色与字号的变化整理图片-ZW 也会一并生效(有意统一)。 */
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;      /* v2.4 #1e1e1e → v2.8 #151517 → v3.0 #000(跟随印前 v11.3) */
+    color: #e6e6e6;        /* v2.4: 原 #f2f2f2 */
+    font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    font-size: 12px;       /* v2.4: 原 13px */
+}
+.wrap {
+    box-sizing: border-box;
+    padding: 16px;
+}
+/* ===== v2.9: 合并面板的顶部页签 + 两个页签容器 =====
+   页签用 <button> —— 通用 button 规则(橙色 width:100%)在这里必须逐条覆盖, 见 .tab 内的注释。 */
+.tabbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-bottom: 1px solid #3a3a3a;
+    margin: 0 0 14px;
+}
+.tab {
+    width: auto;                  /* 覆盖通用 button 的 width: 100% */
+    padding: 7px 14px 8px;
+    margin: 0 0 -1px;             /* 压住 .tabbar 的下边框, 让选中下划线与分隔线重合 */
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;             /* 覆盖通用 button 的 6px 倒角 */
+    background: transparent;      /* 覆盖通用 button 的橙 #f05a28 */
+    color: #9a9a9a;
+    font-size: 13px;
+    font-weight: 600;
+}
+.tab:hover {                      /* 特异性(0,2,0) > 通用 button:hover(0,1,1), 能压住 */
+    background: transparent;
+    color: #e6e6e6;
+}
+.tab.is-on {
+    color: #e6e6e6;
+    border-bottom-color: #e6e6e6;
+}
+/* v2.9: 版本号原挂 h1 .ver(见下方规则); 合并后标题行被页签行取代, 版本号移到页签行右端 */
+.tabbar .ver {
+    margin-left: auto;
+    font-size: 12px;
+    color: #888;
+    font-weight: normal;
+}
+.pane-off {
+    display: none;
+}
+/* v2.9: 整理图片的"每行数量" —— 数字框收紧成固定宽(通用规则是 width:100%, 会占满整行) */
+.num-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+}
+.num-row label {
+    color: #c8c8c8;              /* v2.4: 与 .check-row 同色 */
+    font-size: 12px;
+}
+.num-row input[type="number"] {
+    width: 68px;
+    flex: 0 0 auto;
+}
+.num-row .unit {
+    color: #9a9a9a;
+    font-size: 12px;
+}
+h1 {
+    font-size: 17px;
+    margin: 0 0 12px;
+}
+/* 2026-09-11 (v1.1): 标题后的版本号 */
+h1 .ver {
+    font-size: 12px;
+    color: #888;           /* v2.4: 原 #9a9a9a */
+    font-weight: normal;
+    margin-left: 4px;
+}
+p {
+    color: #c8c8c8;        /* v2.4: 原 #d5d5d5 */
+    line-height: 1.7;
+    margin: 0 0 14px;
+}
+.field {
+    display: grid;
+    grid-template-columns: 108px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+}
+.field label,
+.check-row {
+    color: #c8c8c8;        /* v2.4: 原 #dcdcdc */
+    font-size: 12px;
+}
+input[type="number"],
+input[type="text"],
+select,
+textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 24px;
+    border: 1px solid #4a4a4a;   /* v2.4: 原 #555; v3.0 跟随印前 v11.3 的控件描边档 */
+    border-radius: 6px;          /* v2.4: 新增(原无倒角); v3.0 4px → 6px(印前 .th-in 同档) */
+    background: #1f1f21;         /* v2.4 #252526 → v2.8 #1b1b1c → v3.0 #1f1f21 */
+    color: #e6e6e6;              /* v2.4: 原 #f2f2f2 */
+    padding: 3px 6px;
+    outline: none;
+}
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #888;          /* v2.4: 原 #777; v3.0 跟随印前 v11.3 的 focus 提亮 */
+}
+/* 2026-09-11 (v1.4): 输入框高度按用户要求固定为 200px(原 120px), 仍为固定值, 页面不做任何运行时尺寸计算 */
+textarea {
+    height: 200px;
+    min-height: 200px;
+    resize: vertical;
+    padding: 6px 8px;            /* v2.4: 原 3px 6px */
+    font-size: 12px;             /* v2.4: 显式写出, 与正文一致(原继承 body 的 13px) */
+    font-family: Consolas, "Microsoft YaHei", monospace;
+}
+details {
+    border-top: 1px solid #3c3c3c;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+summary {
+    color: #f2f2f2;
+    cursor: pointer;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.check-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;              /* v2.4: 原 7px */
+    min-height: 24px;
+    margin: 4px 0;
+}
+/* 2026-09-11 (v2.4): 复选框对齐印前检查(14×14)。v3.0: accent 红 #d33 → 蓝 #1a73e8(跟随印前 v11.3); 尺寸仍 14×14 */
+.check-row input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: #1a73e8;
+    cursor: pointer;
+}
+/* 2026-09-11 (v1.6): 两个复选框并排一行(文字转曲 | 保留条码底部白底) */
+.check-inline {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 8px 0;         /* v2.4: 原 6px */
+}
+.check-inline .check-row {
+    margin: 0;
+    white-space: nowrap;
+}
+.panel-action {
+    margin-top: 10px;
+    border: 1px solid #4a4a4a;   /* v2.4: 原 #5a5a5a */
+    /* v2.8: 圆角 4px → 999px 胶囊, 对齐印前 v9.0 起的按钮语言。
+       ⚠ 颜色仍保持深灰 —— 用户拍板不改成印前主按钮的蓝 #0e639c。 */
+    border-radius: 999px;
+    padding: 10px 20px;          /* v2.8: 胶囊化后放大左右内边距(原继承 button 的 12px 10px) */
+    background: #3a3a3a;         /* v2.4: 原 #3f3f3f */
+    color: #e6e6e6;              /* v2.4: 原取自 button 的 #fff */
+    font-size: 13px;
+    font-weight: 600;            /* v2.4: 原取自 button 的 bold */
+}
+.panel-action:hover {
+    background: #474747;         /* v2.4: 原 #4a4a4a(会与新边框同色, 略压暗) */
+}
+button {
+    width: 100%;
+    padding: 12px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: #f05a28;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover {
+    background: #ff6a35;
+}
+button.secondary {
+    margin-top: 12px;
+    border: 1px solid #555;
+    background: #3a3a3a;
+    color: #f2f2f2;
+    font-weight: 600;
+}
+button.secondary:hover {
+    background: #474747;
+}
+.hint {
+    margin-top: 12px;
+    padding: 10px;
+    background: #353535;
+    border-left: 3px solid #62a8ff;
+    line-height: 1.6;
+}
+.warning {
+    border-left-color: #e8b93e;   /* v2.8: 黄色统一跟随印前(原 #ffcc00)。注: .hint/.warning 目前无使用者 */
+}
+.status {
+    margin-top: 10px;
+    color: #a8a8a8;        /* v2.4: 原 #bdbdbd */
+    font-size: 12px;
+}
+/* 2026-09-11 (v1.8): "已生成 N 个条码"里的数字——默认跟随正文色, N>0 时由 runner.js 追加 .is-hit 变黄。
+   (v1.7 加的"状态行为空时不占位"那条规则已随初值恢复而移除) */
+.status-num {
+    color: inherit;
+}
+.status-num.is-hit {
+    color: #e8b93e;        /* v2.8: 跟随印前黄(原 #ffcc00) */
+}
+/* 2026-09-11: 执行失败的提示标红;运行期间按钮置灰(防连点) */
+.status.is-error {
+    color: #f48771;        /* v2.8: 跟随印前 bad 字色(原 #ff8080) */
+}
+button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+/* 2026-09-11 (v1.5): CEP 默认滚动条是系统浅色, 这里统一成深色, 与面板底色一致。
+   不带选择器前缀 → 对 body 与 textarea 内部滚动条同时生效。
+   v2.4: 尺寸/配色对齐印前检查(10px / #4a4a4a / 倒角 5px, 原 12px / #4f4f4f / 6px)。
+   v3.0: 轨道/corner 透明 → #000, 滑块 → #1b1b1b + border 2px #000(印前 v11.3)。
+     ⚠ 轨道同色只对 body 成立; textarea 自身底色是 #1f1f21, 故下面单独把它内部的 track 拉回同色,
+       否则黑色 10px 竖条会贴在输入框右侧。 */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #000;
+}
+::-webkit-scrollbar-thumb {
+    background: #1b1b1b;         /* v3.0: 与卡片同色, 靠 border 2px #000 抠出实体宽度(印前 v11.3 做法) */
+    border: 2px solid #000;      /* v3.0: 原 transparent + background-clip: content-box 一并去掉 */
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #3a3a3a;         /* v3.0: 原 #5a5a5a; 同色滑块在 #000 上只有 27 级灰差, 全靠 hover 提亮辨识 */
+}
+::-webkit-scrollbar-corner {
+    background: #000;
+}
+/* v3.0: textarea 内部滚动条 —— 轨道与滑块描边都跟随输入框底色 #1f1f21 */
+textarea::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-corner {
+    background: #1f1f21;
+}
+textarea::-webkit-scrollbar-thumb {
+    border-color: #1f1f21;
+}

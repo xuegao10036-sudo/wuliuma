@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>物流码</title>
+    <link rel="stylesheet" href="../css/panel.css?v=3.4">
+</head>
+<body>
+    <div class="wrap">
+        <!-- v2.9: 两个面板(条码生成 / 整理图片-ZW)合并为一个面板, 顶部页签切换(用户拍板方案: 基准·顶部页签)。
+             两个 jsx 与 js/runner.js 一行未动语义, 只是把两条 <Extension> 并成一条(见 CSXS/manifest.xml)。
+             ⚠ 两个页签各有**自己的** #status 元素 —— runner 的 setStatus 默认按 id="status" 取全局唯一那个,
+               这里必须靠 statusId 选项区分(见 js/runner.js 的 setStatus 第三参), 否则两个页签会写到同一个节点上。 -->
+        <div class="tabbar">
+            <button class="tab is-on" id="tabBarcode" onclick="switchTab('barcode')">条码生成</button>
+            <button class="tab" id="tabOrganize" onclick="switchTab('organize')">整理图片</button>
+            <span class="ver">v3.4</span>
+        </div>
+
+        <section class="pane" id="paneBarcode">
+            <p id="statusBarcode" class="status">已生成 <span class="status-num">0</span> 个条码。</p>
+            <textarea id="codes">BJ1023211B
+BJ1023212B
+BJ1023213B</textarea>
+            <div class="check-inline">
+                <label class="check-row"><input id="outlineText" type="checkbox" checked><span>文字转曲</span></label>
+                <label class="check-row"><input id="keepBackground" type="checkbox" checked><span>保留条码底部白底</span></label>
+            </div>
+            <button class="panel-action" id="btnCreate" onclick="createBarcodes()">生成条码</button>
+        </section>
+
+        <section class="pane pane-off" id="paneOrganize">
+            <div class="num-row">
+                <label for="maxPerRow">每行数量</label>
+                <input id="maxPerRow" type="number" min="1" max="20" step="1" value="5">
+                <span class="unit">个</span>
+            </div>
+            <!-- v3.1: 间距原来是 jsx 里写死的 5mm，现在可调。step 0.5 —— 2.5mm 是常见间距 -->
+            <div class="num-row">
+                <label for="gap">图片间距</label>
+                <input id="gap" type="number" min="0" max="50" step="0.5" value="5">
+                <span class="unit">mm</span>
+            </div>
+            <p>统一选中图片高度后，按上面的每行数量与间距等距排列（等比缩放不变形）。</p>
+            <p id="statusOrganize" class="status">就绪。</p>
+            <button class="panel-action" id="btnOrganize" onclick="organizeImages()">一键整理图片</button>
+        </section>
+    </div>
+    <script src="../js/CSInterface.js?v=3.4"></script>
+    <script src="../js/runner.js?v=3.4"></script>
+    <script>
+        // v2.9: 合并面板的内联脚本。两段业务各自套上自己的 statusId —— 两个页签的 #status 不是同一个节点。
+        // 默认值 5 与 jsx/organize_images.jsx 里的 DEFAULT_PER_ROW 保持一致(两边都兜底, 面板传空也不会跑飞)。
+        var PER_ROW_DEFAULT = 5;
+        var PER_ROW_MIN = 1;
+        var PER_ROW_MAX = 20;
+        // v3.1: 间距(mm)。默认 5 与 jsx 的 DEFAULT_GAP 一致；0 合法(紧贴)，负数按非法处理退回默认
+        var GAP_DEFAULT = 5;
+        var GAP_MIN = 0;
+        var GAP_MAX = 50;
+
+        function switchTab(which) {
+            var isBarcode = (which === "barcode");
+            document.getElementById("tabBarcode").className = "tab" + (isBarcode ? " is-on" : "");
+            document.getElementById("tabOrganize").className = "tab" + (isBarcode ? "" : " is-on");
+            document.getElementById("paneBarcode").className = "pane" + (isBarcode ? "" : " pane-off");
+            document.getElementById("paneOrganize").className = "pane" + (isBarcode ? " pane-off" : "");
+        }
+
+        function readMaxPerRow() {
+            var raw = document.getElementById("maxPerRow").value;
+            var n = parseInt(raw, 10);
+            if (isNaN(n)) return PER_ROW_DEFAULT;
+            if (n < PER_ROW_MIN) return PER_ROW_MIN;
+            if (n > PER_ROW_MAX) return PER_ROW_MAX;
+            return n;
+        }
+
+        // v3.1: 间距允许小数(2.5mm)，所以用 parseFloat 不用 parseInt；负数属非法输入 → 退回默认
+        function readGap() {
+            var raw = document.getElementById("gap").value;
+            var g = parseFloat(raw);
+            if (isNaN(g)) return GAP_DEFAULT;
+            if (g < GAP_MIN) return GAP_DEFAULT;
+            if (g > GAP_MAX) return GAP_MAX;
+            return g;
+        }
+
+        function createBarcodes() {
+            // 2026-09-11: 把按钮交给 runner 托管——运行期间按钮禁用,防连点重复生成
+            runZWFunction("barcode_generator_panel.jsx", "ZW_barcodeGeneratorRun", {
+                codes: document.getElementById("codes").value,
+                outlineText: document.getElementById("outlineText").checked,
+                keepBackground: document.getElementById("keepBackground").checked
+            }, {
+                button: document.getElementById("btnCreate"),
+                statusId: "statusBarcode",
+                runningText: "正在生成条码...",
+                doneText: "条码生成完成。",
+                // v2.0: 本次会话连续生成时, 第二次起在结果后追加"累计生成 X 个条码"(见 js/runner.js)
+                accumulate: true
+            });
+        }
+
+        function organizeImages() {
+            // v2.9: 每行数量从面板取(原来 jsx 里写死 5)。jsx 侧仍会再钳一次范围, 这里钳一次是为了
+            // 让输入框里的非法值(空 / 0 / 999)立刻回显成合法值, 用户能看见实际会用的数。
+            var n = readMaxPerRow();
+            document.getElementById("maxPerRow").value = n;
+            var g = readGap();
+            document.getElementById("gap").value = g;
+            runZWFunction("organize_images.jsx", "ZW_organizeImagesRun", {
+                maxPerRow: n,
+                gap: g
+            }, {
+                button: document.getElementById("btnOrganize"),
+                statusId: "statusOrganize",
+                runningText: "正在整理图片...",
+                doneText: "整理完成。"
+            });
+        }
+    </script>
+</body>
+</html>
